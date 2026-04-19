@@ -1,0 +1,53 @@
+# ZeroClaw — Cloudron seed config (first run copied to /app/data/.zeroclaw/config.toml)
+# Edit via Cloudron File Manager or web terminal after install.
+
+workspace_dir = "/app/data/workspace"
+config_path = "/app/data/.zeroclaw/config.toml"
+
+default_provider = "openrouter"
+default_model = "anthropic/claude-sonnet-4-20250514"
+default_temperature = 0.7
+
+[gateway]
+port = 42617
+host = "[::]"
+allow_public_bind = true
+require_pairing = true
+web_dist_dir = "/app/code/web/dist"
+
+[autonomy]
+level = "supervised"
+workspace_only = true       # scoped to workspace by default
+auto_approve = [
+  "file_read",
+  "file_write",
+  "file_edit",
+  "memory_recall",
+  "memory_store",
+  "web_search_tool",
+  "web_fetch",
+  "calculator",
+  "glob_search",
+  "content_search",
+  "image_info",
+  "weather",
+  "git_operations",
+]
+
+[tunnel]
+provider = "none"              # "none", "cloudflare", "tailscale", "ngrok", "custom"
+
+[secrets]
+encrypt = true                 # API keys encrypted with local key file
+
+[browser]
+enabled = true                # opt-in browser_open + browser tools
+backend = "auto"      # "agent_browser", "native", "computer_use", "auto"
+# allowed_domains = ["github.com"]
+
+[composio]
+enabled = false                # opt-in: 1000+ OAuth apps via composio.dev
+entity_id = "default"
+
+[identity]
+format = "openclaw"            # "openclaw" (markdown) or "aieos" (JSON)

@@ -1,0 +1,34 @@
+{
+  "id": "ai.zeroclawlabs.cloudronapp",
+  "title": "ZeroClaw",
+  "tagline": "Personal AI assistant — lean Rust runtime, gateway + web dashboard",
+  "version": "0.7.3",
+  "manifestVersion": 2,
+  "healthCheckPath": "/health",
+  "httpPort": 42617,
+  "memoryLimit": 536870912,
+  "addons": {
+    "localstorage": {}
+  },
+  "author": "ZeroClaw Labs <hello@zeroclawlabs.ai>",
+  "packagerName": "cloudron-zeroclaw",
+  "packagerUrl": "https://github.com/benneic/cloudron-zeroclaw",
+  "website": "https://zeroclawlabs.ai",
+  "contactEmail": "hello@zeroclawlabs.ai",
+  "documentationUrl": "https://github.com/benneic/cloudron-zeroclaw/blob/main/README.md",
+  "iconUrl": "https://raw.githubusercontent.com/benneic/cloudron-zeroclaw/HEAD/logo.png",
+  "tags": [
+    "ai",
+    "assistant",
+    "agent",
+    "llm",
+    "chatbot",
+    "rust"
+  ],
+  "description": "file://DESCRIPTION.md",
+  "changelog": "file://CHANGELOG",
+  "postInstallMessage": "file://POSTINSTALL.md",
+  "minBoxVersion": "9.1.0",
+  "upstreamVersion": "0.7.3",
+  "mediaLinks": []
+}

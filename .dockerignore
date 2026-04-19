@@ -1,0 +1,8 @@
+.git
+.github
+.agents
+*.md
+!DESCRIPTION.md
+LICENSE
+skills-lock.json
+.cursor

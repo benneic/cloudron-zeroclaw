@@ -1,0 +1,55 @@
+name: Track upstream ZeroClaw
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  track:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve upstream latest release
+        id: up
+        run: |
+          set -euo pipefail
+          TAG="$(curl -fsSL https://api.github.com/repos/zeroclaw-labs/zeroclaw/releases/latest | jq -r .tag_name)"
+          VER="${TAG#v}"
+          CUR="$(jq -r .version CloudronManifest.json)"
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+          echo "version=${VER}" >> "${GITHUB_OUTPUT}"
+          echo "current=${CUR}" >> "${GITHUB_OUTPUT}"
+          if [[ "${VER}" == "${CUR}" ]]; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+          else
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Bump manifest and CHANGELOG
+        if: steps.up.outputs.changed == 'true'
+        run: scripts/bump-version.sh "${{ steps.up.outputs.version }}"
+
+      - name: Create Pull Request
+        if: steps.up.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Track upstream v${{ steps.up.outputs.version }}"
+          title: "Upstream release v${{ steps.up.outputs.version }}"
+          body: |
+            Automated bump: upstream [${{ steps.up.outputs.tag }}](https://github.com/zeroclaw-labs/zeroclaw/releases/tag/${{ steps.up.outputs.tag }}).
+
+            **After merge**, run locally (with Docker + `cloudron` CLI):
+
+            ```bash
+            cloudron build
+            cloudron versions add
+            git add CloudronVersions.json && git commit -m "release ${{ steps.up.outputs.version }}" && git push
+            ```
+          branch: upstream/${{ steps.up.outputs.version }}
+          delete-branch: true
