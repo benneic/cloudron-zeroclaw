@@ -26,7 +26,7 @@ The `containerPort` is the port inside the container. `defaultValue` is the sugg
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `addons` | object | Keys: `email`, `ldap`, `localstorage`, `mongodb`, `mysql`, `oidc`, `postgresql`, `proxyauth`, `recvmail`, `redis`, `sendmail`, `scheduler`, `tls`. Values are option objects (often `{}`) |
+| `addons` | object | Keys (case-sensitive, per the official schema): `docker`, `email`, `headless`, `ldap`, `localstorage`, `mongodb`, `mysql`, `oauth`, `oidc`, `postgresql`, `proxyAuth`, `recvmail`, `redis`, `scheduler`, `sendmail`, `tls`, `turn`. Values are option objects (often `{}`). Note `proxyAuth` is camelCase |
 
 ## Metadata (for App Store / CloudronVersions.json)
 

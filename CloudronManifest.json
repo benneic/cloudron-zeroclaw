@@ -9,7 +9,10 @@
   "memoryLimit": 536870912,
   "addons": {
     "localstorage": {},
-    "postgresql": {}
+    "postgresql": {},
+    "proxyAuth": {
+      "supportsBearerAuth": true
+    }
   },
   "author": "ZeroClaw Labs <hello@zeroclawlabs.ai>",
   "packagerName": "cloudron-zeroclaw",

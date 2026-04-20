@@ -6,4 +6,7 @@
 - Gateway on port 42617, `healthCheckPath` `/health`, persistent `/app/data`.
 - Seeded config with `require_pairing = true` for internet exposure.
 - Enable `postgresql` addon and wire ZeroClaw memory to it (`[memory] backend = "postgres"`, `start.sh` exports `ZEROCLAW_POSTGRES_URL` from `CLOUDRON_POSTGRESQL_URL`).
+- **Security:** add Cloudron `proxyauth` addon in front of the gateway. Upstream's `GET /pair/code` endpoint is public by design (the dashboard auto-fills the code from it), which lets anyone who can reach the URL pair themselves. Putting Cloudron's user-auth wall in front means only logged-in Cloudron users (per `accessRestriction`) can ever load the dashboard or hit `/pair`. `supportsBearerAuth: true` keeps the dashboard's bearer-token flow working for `/api/*` and the WebSocket/SSE endpoints.
+- Harden `[gateway]` defaults: `pair_rate_limit_per_minute = 5`, `trust_forwarded_headers = true` (safe behind Cloudron's trusted proxy — the rate limiter now sees real client IPs).
+- Harden `[gateway.pairing_dashboard]`: `code_length = 12`, `code_ttl_secs = 300` (5 min), `max_pending_codes = 1`, `max_failed_attempts = 3`, `lockout_secs = 900` (15 min).
 - Upstream release notes: https://github.com/zeroclaw-labs/zeroclaw/releases/tag/v0.7.3

@@ -193,9 +193,11 @@ CLOUDRON_EMAIL_SERVER_HOST
 
 Accept self-signed certificates for internal IMAP/Sieve connections.
 
-## proxyauth
+## proxyAuth
 
 Authentication wall in front of the app. Reserves `/login` and `/logout` routes.
+
+Manifest key is **camelCase** (`proxyAuth`) — the JSON Schema rejects `proxyauth`.
 
 Options:
 

@@ -186,7 +186,7 @@ Declare addons in the manifest `addons` object. Env vars are injected at runtime
 | `sendmail` | Outgoing email (SMTP relay) | `CLOUDRON_MAIL_SMTP_SERVER` |
 | `recvmail` | Incoming email (IMAP) | `CLOUDRON_MAIL_IMAP_SERVER` |
 | `email` | Full email (SMTP + IMAP + Sieve) | multiple |
-| `proxyauth` | Authentication wall in front of app | — |
+| `proxyAuth` | Authentication wall in front of app (camelCase) | — |
 | `scheduler` | Cron-like periodic tasks | — |
 | `tls` | App certificate files | `/etc/certs/tls_cert.pem` |
 | `turn` | STUN/TURN service | `CLOUDRON_TURN_SERVER` |

@@ -33,12 +33,30 @@ allow_remote_fetch = false          # SSRF risk — flip to true only on a trust
 # vision_provider = "ollama"
 # vision_model = "qwen3.5:9b-mxfp8"
 
+# ── Gateway ─────────────────────────────────────────────────────────────────
+# The Cloudron `proxyauth` addon sits in front of every request and enforces
+# Cloudron user login (+ 2FA). That means only users you've granted access to
+# in the Cloudron dashboard can ever reach the gateway — and therefore only
+# they can pair. Without proxyauth, ZeroClaw's `GET /pair/code` endpoint is
+# public by design (the dashboard auto-fills the code from it), which would
+# let anyone who can load the URL pair themselves.
 [gateway]
 port = 42617
-host = "[::]"
-allow_public_bind = true
-require_pairing = true
+host = "[::]"                     # bind all interfaces — required for Docker port mapping
+allow_public_bind = true          # required when host != 127.0.0.1
+require_pairing = true            # belt-and-braces alongside proxyauth
+trust_forwarded_headers = true    # Cloudron's reverse proxy forwards real client IP
+pair_rate_limit_per_minute = 5    # tighter than the default 10
 web_dist_dir = "/app/code/web/dist"
+
+[gateway.pairing_dashboard]
+# Even with proxyauth gating the dashboard, keep the pairing surface tight:
+# short-lived single code, fast lockout on bad guesses.
+code_length = 12                  # default 8 → 12 chars of entropy
+code_ttl_secs = 300               # default 3600 (1h) → 5 min
+max_pending_codes = 1             # default 3 → only one code valid at a time
+max_failed_attempts = 3           # default 5 → 3
+lockout_secs = 900                # default 300 (5m) → 15 min
 
 [memory]
 backend = "postgres"           # Cloudron postgresql addon (see [storage.provider.config])
