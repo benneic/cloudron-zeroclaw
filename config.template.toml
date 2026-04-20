@@ -1,26 +1,36 @@
 # ZeroClaw — Cloudron seed config (first run copied to /app/data/.zeroclaw/config.toml)
 # Edit via Cloudron File Manager or web terminal after install.
 
+schema_version = 2
+
 workspace_dir = "/app/data/workspace"
 config_path = "/app/data/.zeroclaw/config.toml"
 
-default_provider = "ollama"
-default_model = "qwen3.5:9b-mxfp8"
+# ── Provider ────────────────────────────────────────────────────────────────
+# V2 schema: providers live under [providers.models.<name>] and the active
+# profile is selected by [providers].fallback. The map key (here "ollama")
+# determines the provider type — no separate `name` field needed.
+[providers]
+fallback = "ollama"
 
-[providers.ollama]
-base_url = "http://10.0.0.1:11434"  # address of your Ollama host
-tool_calling = "native"             # qwen3.5 supports native function calling
-stream = true
+[providers.models.ollama]
+base_url = "http://10.0.0.1:11434"  # address of your LAN Ollama host
+model = "qwen3.5:9b-mxfp8"
+temperature = 1.0                   # qwen3.5 modelfile default; thinking models prefer 1.0
 num_ctx = 16384                     # bump context if your model card supports it
-supports_vision = true              # qwen3.5 isn't in the auto-detect allowlist; flag it explicitly
 
 [runtime]
-reasoning_enabled = true            # sends think:true to /api/chat (qwen3.5 reasoning on)
+reasoning_enabled = true            # sends think:true to /api/chat — qwen3.5 thinking on
 
 [multimodal]
-max_images = 4                      # default 4 — bump if you send many per turn
-max_image_size_mb = 10              # default 5 MiB; pre-base64 size
-allow_remote_fetch = true           # set true ONLY if you want ZeroClaw to fetch http(s) URLs
+# Image markers in user messages: [IMAGE:/path], [IMAGE:data:image/...;base64,...]
+# Vision capability is reported by the Ollama provider; no extra flag needed.
+max_images = 4                      # 1–16 (clamped at runtime)
+max_image_size_mb = 10              # 1–20 MiB; pre-base64 size
+allow_remote_fetch = false          # SSRF risk — flip to true only on a trusted LAN
+# Optional: force-route image-bearing turns to a dedicated vision model.
+# vision_provider = "ollama"
+# vision_model = "qwen3.5:9b-mxfp8"
 
 [gateway]
 port = 42617
