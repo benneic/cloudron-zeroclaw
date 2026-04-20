@@ -18,6 +18,7 @@ base_url = "http://10.0.0.1:11434"  # address of your LAN Ollama host
 model = "qwen3.5:9b-mxfp8"
 temperature = 1.0                   # qwen3.5 modelfile default; thinking models prefer 1.0
 num_ctx = 16384                     # bump context if your model card supports it
+supports_vision = true              # qwen3.5 isn't in the auto-detect allowlist; flag it explicitly
 
 [runtime]
 reasoning_enabled = true            # sends think:true to /api/chat — qwen3.5 thinking on
