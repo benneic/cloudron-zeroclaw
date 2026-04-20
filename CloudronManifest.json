@@ -8,7 +8,8 @@
   "httpPort": 42617,
   "memoryLimit": 536870912,
   "addons": {
-    "localstorage": {}
+    "localstorage": {},
+    "postgresql": {}
   },
   "author": "ZeroClaw Labs <hello@zeroclawlabs.ai>",
   "packagerName": "cloudron-zeroclaw",

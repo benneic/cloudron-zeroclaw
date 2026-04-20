@@ -61,9 +61,33 @@ cloudron restart <app-id>
 
 Treat inbound DMs as untrusted; use upstream **[SECURITY.md](https://github.com/zeroclaw-labs/zeroclaw/blob/master/SECURITY.md)** pairing defaults.
 
+## Memory (PostgreSQL)
+
+ZeroClaw's memory layer is wired to the Cloudron **`postgresql`** addon so conversation context survives restarts and can be shared across agent processes.
+
+- **Manifest**: `addons.postgresql` is enabled in **`CloudronManifest.json`**.
+- **Runtime wiring**: `start.sh` exports `ZEROCLAW_POSTGRES_URL` from the addon's `CLOUDRON_POSTGRESQL_URL` env var. ZeroClaw resolves connection strings in the order `ZEROCLAW_POSTGRES_URL` → `ZEROCLAW_DB_URL` → `DATABASE_URL` → `config.toml`, so the addon URL always wins over the seeded placeholder.
+- **Seed config**: `[memory] backend = "postgres"` with `auto_save = true`, plus a `[storage.provider.config]` block in **`config.template.toml`** (schema `public`, table `memories`).
+
+The PostgreSQL backend stores entries as JSONB and is suited for shared/centralised memory; it does not perform vector or FTS search itself (use the SQLite backend instead if you need hybrid search on a single node).
+
+Inspect or query the addon directly:
+
+```bash
+cloudron exec --app <app-id> -- bash -lc 'PGPASSWORD=$CLOUDRON_POSTGRESQL_PASSWORD \
+  psql -h $CLOUDRON_POSTGRESQL_HOST -p $CLOUDRON_POSTGRESQL_PORT \
+       -U $CLOUDRON_POSTGRESQL_USERNAME -d $CLOUDRON_POSTGRESQL_DATABASE \
+       -c "\\dt"'
+```
+
+To opt out of postgres memory (e.g. switch to local SQLite), edit `/app/data/.zeroclaw/config.toml`, set `[memory] backend = "sqlite"`, and restart.
+
 ## Backups & restore
 
-The **`localstorage`** addon backs up **`/app/data`** (workspace, `config.toml`, auth profiles, secrets). Use Cloudron’s normal backup/restore flow.
+- **`localstorage`** addon backs up **`/app/data`** (workspace, `config.toml`, auth profiles, secrets).
+- **`postgresql`** addon backs up the memory database that holds conversation history and recall entries.
+
+Both are included in Cloudron's normal backup/restore flow — no extra steps.
 
 ## Updates
 

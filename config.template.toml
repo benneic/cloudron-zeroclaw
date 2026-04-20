@@ -4,9 +4,23 @@
 workspace_dir = "/app/data/workspace"
 config_path = "/app/data/.zeroclaw/config.toml"
 
-default_provider = "openrouter"
-default_model = "anthropic/claude-sonnet-4-20250514"
-default_temperature = 0.7
+default_provider = "ollama"
+default_model = "qwen3.5:9b-mxfp8"
+
+[providers.ollama]
+base_url = "http://10.0.0.1:11434"  # address of your Ollama host
+tool_calling = "native"             # qwen3.5 supports native function calling
+stream = true
+num_ctx = 16384                     # bump context if your model card supports it
+supports_vision = true              # qwen3.5 isn't in the auto-detect allowlist; flag it explicitly
+
+[runtime]
+reasoning_enabled = true            # sends think:true to /api/chat (qwen3.5 reasoning on)
+
+[multimodal]
+max_images = 4                      # default 4 — bump if you send many per turn
+max_image_size_mb = 10              # default 5 MiB; pre-base64 size
+allow_remote_fetch = true           # set true ONLY if you want ZeroClaw to fetch http(s) URLs
 
 [gateway]
 port = 42617
@@ -14,6 +28,19 @@ host = "[::]"
 allow_public_bind = true
 require_pairing = true
 web_dist_dir = "/app/code/web/dist"
+
+[memory]
+backend = "postgres"           # Cloudron postgresql addon (see [storage.provider.config])
+auto_save = true               # persist each turn into shared memory
+
+[storage.provider.config]
+provider = "postgres"
+# db_url is overridden at runtime by ZEROCLAW_POSTGRES_URL, which start.sh
+# populates from the Cloudron postgresql addon's CLOUDRON_POSTGRESQL_URL.
+db_url = "postgres://placeholder@localhost:5432/zeroclaw"
+schema = "public"
+table = "memories"
+connect_timeout_secs = 15
 
 [autonomy]
 level = "supervised"
