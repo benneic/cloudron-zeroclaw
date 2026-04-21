@@ -8,68 +8,77 @@ config_path = "/app/data/.zeroclaw/config.toml"
 
 # ── Provider ────────────────────────────────────────────────────────────────
 # V2 schema: providers live under [providers.models.<name>] and the active
-# profile is selected by [providers].fallback. The map key (here "ollama")
-# determines the provider type — no separate `name` field needed.
+# profile is selected by [providers].fallback.
+#
+# Why the `custom:URL` form (instead of `fallback = "ollama"`):
+# ZeroClaw's config loader runs `apply_named_model_provider_profile()` on every
+# boot, and when it sees `fallback = "ollama"` with a `base_url` set, it
+# unconditionally rewrites the fallback key to `custom:<base_url>` for Codex
+# app-server compatibility — but it only carries `base_url`/`api_path` into the
+# new entry, NOT `model`. So the runtime ends up looking up an empty entry and
+# falling back to its hardcoded default model (`anthropic/claude-sonnet-4-…`),
+# which is what caused the "model not found" errors on the LAN endpoint.
+#
+# Declaring the fallback directly as `custom:<URL>` pins both the endpoint and
+# the model to the same entry, skipping the rewrite entirely.
+#
+# Why `/v1` on the URL: the `custom:` provider uses `OpenAiCompatibleProvider`,
+# which appends `/chat/completions` to the base URL. Ollama exposes its
+# OpenAI-compatible endpoint at `/v1/chat/completions` (not `/chat/completions`
+# at root), so the base URL MUST end with `/v1`.
+#
+# Trade-off: this routes through Ollama's OpenAI-compat shim instead of its
+# native `/api/chat` endpoint. Vision still works (OpenAI `image_url` content
+# parts), and Ollama surfaces thinking tokens in a non-standard `reasoning`
+# field on the response — ZeroClaw may or may not render them depending on
+# release; the final assistant `content` is unaffected.
 [providers]
-fallback = "ollama"
+fallback = "custom:http://10.0.0.1:11434/v1"  # replace with your LAN Ollama host
 
-[providers.models.ollama]
-base_url = "http://10.0.0.1:11434"  # address of your LAN Ollama host
+[providers.models."custom:http://10.0.0.1:11434/v1"]
 model = "qwen3.5:9b-mxfp8"
 temperature = 1.0                   # qwen3.5 modelfile default; thinking models prefer 1.0
-num_ctx = 16384                     # bump context if your model card supports it
-supports_vision = true              # qwen3.5 isn't in the auto-detect allowlist; flag it explicitly
-
-[runtime]
-reasoning_enabled = true            # sends think:true to /api/chat — qwen3.5 thinking on
+# api_key is not required for an open LAN Ollama; set it if you front Ollama
+# with a reverse proxy that enforces Bearer auth.
+# api_key = "…"
 
 [multimodal]
 # Image markers in user messages: [IMAGE:/path], [IMAGE:data:image/...;base64,...]
-# Vision capability is reported by the Ollama provider; no extra flag needed.
+# Images are forwarded to the OpenAI-compat endpoint as `image_url` content parts,
+# which Ollama's /v1/chat/completions understands for vision-capable models.
 max_images = 4                      # 1–16 (clamped at runtime)
 max_image_size_mb = 10              # 1–20 MiB; pre-base64 size
 allow_remote_fetch = false          # SSRF risk — flip to true only on a trusted LAN
-# Optional: force-route image-bearing turns to a dedicated vision model.
-# vision_provider = "ollama"
-# vision_model = "qwen3.5:9b-mxfp8"
 
 # ── Gateway ─────────────────────────────────────────────────────────────────
-# The Cloudron `proxyauth` addon sits in front of every request and enforces
-# Cloudron user login (+ 2FA). That means only users you've granted access to
-# in the Cloudron dashboard can ever reach the gateway — and therefore only
-# they can pair. Without proxyauth, ZeroClaw's `GET /pair/code` endpoint is
-# public by design (the dashboard auto-fills the code from it), which would
-# let anyone who can load the URL pair themselves.
+# Auth model: Cloudron's `proxyAuth` addon is the sole authentication wall.
+# Every request (HTML, /api/*, /ws/*, /pair*) must carry a valid Cloudron
+# session cookie, so only users you've granted access to in the Cloudron
+# dashboard can ever reach this app.
+#
+# Why `require_pairing = false`: ZeroClaw's built-in pairing flow is designed
+# to gate a public gateway with a one-time code + Bearer token. Stacking it
+# behind Cloudron's proxyAuth creates an uncoordinated double-auth: the SPA's
+# bootstrap XHR (no Bearer yet) gets 302'd to /login by Cloudron before it can
+# even ask ZeroClaw for a pair code. Collapsing to a single gate (Cloudron)
+# avoids that and gives stronger security anyway — no long-lived Bearer tokens
+# to leak, Cloudron-enforced 2FA, per-user audit.
 [gateway]
 port = 42617
 host = "[::]"                     # bind all interfaces — required for Docker port mapping
 allow_public_bind = true          # required when host != 127.0.0.1
-require_pairing = true            # belt-and-braces alongside proxyauth
+require_pairing = false           # Cloudron proxyAuth is the sole auth wall — see above
 trust_forwarded_headers = true    # Cloudron's reverse proxy forwards real client IP
-pair_rate_limit_per_minute = 5    # tighter than the default 10
 web_dist_dir = "/app/code/web/dist"
 
-[gateway.pairing_dashboard]
-# Even with proxyauth gating the dashboard, keep the pairing surface tight:
-# short-lived single code, fast lockout on bad guesses.
-code_length = 12                  # default 8 → 12 chars of entropy
-code_ttl_secs = 300               # default 3600 (1h) → 5 min
-max_pending_codes = 1             # default 3 → only one code valid at a time
-max_failed_attempts = 3           # default 5 → 3
-lockout_secs = 900                # default 300 (5m) → 15 min
-
 [memory]
-backend = "postgres"           # Cloudron postgresql addon (see [storage.provider.config])
-auto_save = true               # persist each turn into shared memory
-
-[storage.provider.config]
-provider = "postgres"
-# db_url is overridden at runtime by ZEROCLAW_POSTGRES_URL, which start.sh
-# populates from the Cloudron postgresql addon's CLOUDRON_POSTGRESQL_URL.
-db_url = "postgres://placeholder@localhost:5432/zeroclaw"
-schema = "public"
-table = "memories"
-connect_timeout_secs = 15
+# v0.7.3 supports: sqlite | lucid | qdrant | markdown | none
+# (Postgres is NOT a supported backend in this release — setting backend = "postgres"
+#  results in `Unknown memory backend 'postgres', falling back to markdown`.)
+# SQLite's `brain.db` lives in /app/data/workspace/ so it persists across restarts
+# AND is included in Cloudron filesystem backups via the `localstorage` addon.
+backend = "sqlite"
+auto_save = true                # persist each turn into shared memory
 
 [autonomy]
 level = "supervised"
