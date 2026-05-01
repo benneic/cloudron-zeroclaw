@@ -3,7 +3,7 @@
 # Upstream images no longer ship a loose /zeroclaw-data/web tree, so we build web/dist here.
 #
 # Override at build time: docker build --build-arg ZEROCLAW_GIT_TAG=v0.7.4 .
-ARG ZEROCLAW_GIT_TAG=v0.7.3
+ARG ZEROCLAW_GIT_TAG=v0.7.4
 
 FROM node:22-alpine AS web-builder
 ARG ZEROCLAW_GIT_TAG

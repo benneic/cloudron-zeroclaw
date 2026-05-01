@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.4 (packaged)
+
+- Track upstream [v0.7.4](https://github.com/zeroclaw-labs/zeroclaw/releases/tag/v0.7.4).
+
 ## 0.7.3 (packaged)
 
 - Initial Cloudron package: rebase upstream `ghcr.io/zeroclaw-labs/zeroclaw:debian` onto `cloudron/base:5.0.0`.

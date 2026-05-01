@@ -2,7 +2,7 @@
   "id": "ai.zeroclawlabs.cloudronapp",
   "title": "ZeroClaw",
   "tagline": "Personal AI assistant — lean Rust runtime, gateway + web dashboard",
-  "version": "0.7.3",
+  "version": "0.7.4",
   "manifestVersion": 2,
   "healthCheckPath": "/health",
   "httpPort": 42617,
@@ -30,6 +30,6 @@
   "changelog": "file://CHANGELOG",
   "postInstallMessage": "file://POSTINSTALL.md",
   "minBoxVersion": "9.1.0",
-  "upstreamVersion": "0.7.3",
+  "upstreamVersion": "0.7.4",
   "mediaLinks": []
 }
